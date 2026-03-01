@@ -7,13 +7,13 @@ Most people using Claude Code have no idea where their context budget is going. 
 ## Install
 
 ```bash
-npm i -g claude-trace
+npm install -g github:vexorkai/claude-trace
 ```
 
 Or run without installing:
 
 ```bash
-npx claude-trace --tools
+npx github:vexorkai/claude-trace --tools
 ```
 
 ## Usage
