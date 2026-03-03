@@ -16,6 +16,24 @@ Or run without installing:
 npx github:vexorkai/claude-trace --tools
 ```
 
+## Claude Code Skill
+
+Install the `/reflect` skill to run session analysis directly inside Claude Code:
+
+```bash
+mkdir -p ~/.claude/skills/claude-trace
+curl -o ~/.claude/skills/claude-trace/SKILL.md \
+  https://raw.githubusercontent.com/vexorkai/claude-trace/main/skills/claude-trace/SKILL.md
+```
+
+Then in any Claude Code session:
+
+```
+/reflect
+```
+
+Claude will run the analyzer on the current project and reason about the output — surfacing insights and offering CLAUDE.md additions.
+
 ## Usage
 
 ```
