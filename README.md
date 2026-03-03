@@ -18,9 +18,13 @@ npx github:vexorkai/claude-trace --tools
 
 ## Claude Code Skill
 
-Install the `/reflect` skill to run session analysis directly inside Claude Code:
+The `/reflect` command runs inside Claude Code and requires the CLI to be installed first.
 
 ```bash
+# 1. Install the CLI
+npm install -g github:vexorkai/claude-trace
+
+# 2. Install the skill
 mkdir -p ~/.claude/skills/claude-trace
 curl -o ~/.claude/skills/claude-trace/SKILL.md \
   https://raw.githubusercontent.com/vexorkai/claude-trace/main/skills/claude-trace/SKILL.md
@@ -32,7 +36,7 @@ Then in any Claude Code session:
 /reflect
 ```
 
-Claude will run the analyzer on the current project and reason about the output — surfacing insights and offering CLAUDE.md additions.
+Claude runs `claude-trace --reflect` on the current project and reasons about the output — surfacing insights and offering CLAUDE.md additions.
 
 ## Usage
 
