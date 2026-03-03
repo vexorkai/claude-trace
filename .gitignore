@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Internal planning docs
+PIVOT.md
+DESIGN.md
+REDESIGN.md
+TESTING.md
+
+# OS
+.DS_Store
+*.swp
+
+# Logs
+*.log
