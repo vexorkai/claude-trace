@@ -1,0 +1,12 @@
+{
+  "marketplace": {
+    "name": "claude-trace",
+    "description": "Cost analytics and efficiency analysis for Claude Code sessions",
+    "plugins": [
+      {
+        "name": "claude-trace",
+        "source": "./"
+      }
+    ]
+  }
+}

@@ -120,6 +120,19 @@ function generateSuggestions(analysis) {
     suggestions.push(`Add to CLAUDE.md: "Use Glob/Grep to locate files before Read — avoid reading files speculatively."`);
   }
 
+  // Suggest specific frequently-read files for CLAUDE.md context
+  const fileReads = {};
+  for (const inv of (analysis.session.toolInvocations || [])) {
+    if (inv.toolName === 'Read' && inv.input && inv.input.file_path) {
+      fileReads[inv.input.file_path] = (fileReads[inv.input.file_path] || 0) + 1;
+    }
+  }
+  const repeatedFiles = Object.entries(fileReads).filter(([, count]) => count >= 3).sort((a, b) => b[1] - a[1]);
+  if (repeatedFiles.length > 0) {
+    const names = repeatedFiles.slice(0, 3).map(([fp]) => fp.split('/').pop()).join(', ');
+    suggestions.push(`Add to CLAUDE.md: "Key files to read upfront: ${names} — these were each read 3+ times this session."`);
+  }
+
   return [...new Set(suggestions)];
 }
 
@@ -175,6 +188,29 @@ function printReflect(session, sessionCost) {
     const topPct = Math.round(((toolTokens[topTool[0]] || 0) / totalResultTokens) * 100);
     if (topPct > 50) {
       console.log(color('yellow', `\n  ⚠ ${topTool[0]} dominated at ${topPct}% of context injection.`));
+    }
+
+    // Per-file breakdown when Read is significant (>30% of tokens)
+    const readPct = Math.round(((toolTokens['Read'] || 0) / totalResultTokens) * 100);
+    if (readPct > 30) {
+      const fileReads = {};
+      for (const inv of (session.toolInvocations || [])) {
+        if (inv.toolName === 'Read' && inv.input && inv.input.file_path) {
+          const fp = inv.input.file_path;
+          const entry = fileReads[fp] || { reads: 0, tokens: 0 };
+          entry.reads++; entry.tokens += inv.resultTokens;
+          fileReads[fp] = entry;
+        }
+      }
+      const fileRows = Object.entries(fileReads).sort((a, b) => b[1].tokens - a[1].tokens).slice(0, 5);
+      if (fileRows.length > 0) {
+        console.log(`\n${bold('Top read files:')}`);
+        for (const [fp, data] of fileRows) {
+          const name = fp.split('/').slice(-2).join('/');
+          const fileCost = (data.tokens / totalResultTokens) * cost;
+          console.log(`  ${name.padEnd(36)} ${String(data.reads).padStart(3)}x  ${fmtUsd(fileCost)}`);
+        }
+      }
     }
   }
 

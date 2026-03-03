@@ -7,7 +7,7 @@ Zero-dependency Node.js CLI for Claude Code session cost analytics and efficienc
 Before any task is complete:
 ```bash
 node index.js
-node index.js --reflect --project ~/Documents/Github/robinhood-cli
+node index.js --reflect --project "$PWD"
 node index.js --tools
 ```
 All three must produce readable output without errors. There's no test suite — visual verification is the check.
@@ -38,6 +38,10 @@ Maximum 2 attempts at any parsing fix before reporting. JSONL format is poorly d
 - Do not add external npm dependencies. The zero-dependency property is intentional.
 - Do not run `npm publish` without explicit instruction.
 - Do not modify the pricing tables in `src/cost.js` without citing the source URL.
+
+## Efficiency
+- When verifying CLI output across multiple flags, batch into a single Bash call with a loop rather than separate invocations.
+- Create task items in bulk when possible — avoid sequential TaskCreate calls that each inject context.
 
 ## Gotchas
 - Claude Code JSONL format has no official spec. The parser in `src/parse.js` was reverse-engineered. Edge cases (tool results with nested arrays, multi-part content blocks) trip it up — test with real session files.

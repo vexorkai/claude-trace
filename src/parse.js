@@ -105,7 +105,7 @@ function parseFile(filePath) {
       if (Array.isArray(content)) {
         for (const block of content) {
           if (block && block.type === 'tool_use' && block.id && block.name) {
-            pendingTools.set(block.id, { name: block.name, turnIndex });
+            pendingTools.set(block.id, { name: block.name, turnIndex, input: block.input || {} });
           }
         }
       }
@@ -135,7 +135,7 @@ function parseFile(filePath) {
         allToolResults.push(r);
         const tool = pendingTools.get(r.toolUseId);
         if (tool) {
-          toolInvocations.push({ toolName: tool.name, turnIndex: tool.turnIndex, resultTokens: Math.ceil(r.rawLength / 4), isError: !r.success });
+          toolInvocations.push({ toolName: tool.name, turnIndex: tool.turnIndex, resultTokens: Math.ceil(r.rawLength / 4), isError: !r.success, input: tool.input });
           pendingTools.delete(r.toolUseId);
         }
       }

@@ -46,7 +46,7 @@ function parseToolResults(lines) {
     if (r && r.type === 'assistant' && r.message && r.message.content) {
       for (const block of r.message.content) {
         if (block && block.type === 'tool_use' && block.id && block.name) {
-          pendingTools.set(block.id, { name: block.name, turnIndex });
+          pendingTools.set(block.id, { name: block.name, turnIndex, input: block.input || {} });
         }
       }
       turnIndex++;
@@ -56,7 +56,7 @@ function parseToolResults(lines) {
         if (block && block.type === 'tool_result' && block.tool_use_id) {
           const tool = pendingTools.get(block.tool_use_id);
           if (tool) {
-            invocations.push({ turnIndex: tool.turnIndex, toolName: tool.name, resultTokens: estimateTokens(block.content), isError: block.is_error || false });
+            invocations.push({ turnIndex: tool.turnIndex, toolName: tool.name, resultTokens: estimateTokens(block.content), isError: block.is_error || false, input: tool.input });
             pendingTools.delete(block.tool_use_id);
           }
         }
@@ -69,7 +69,7 @@ function parseToolResults(lines) {
 function load(days) {
   const files = listJsonlAll();
   const since = days > 0 ? Date.now() - days * 86400000 : 0;
-  const totals = empty(), bySession = new Map(), byProject = new Map(), byToolV2 = new Map(), byDay = new Map();
+  const totals = empty(), bySession = new Map(), byProject = new Map(), byToolV2 = new Map(), byDay = new Map(), byFile = new Map();
   let parseErrors = 0, linesRead = 0;
 
   for (const f of files) {
@@ -111,6 +111,12 @@ function load(days) {
         row.calls++; row.resultTokens += inv.resultTokens; row.attributedCost += cost;
         byToolV2.set(inv.toolName, row);
         sd.toolsByResult[inv.toolName] = (sd.toolsByResult[inv.toolName] || 0) + cost;
+        if (inv.toolName === 'Read' && inv.input && inv.input.file_path) {
+          const fp = inv.input.file_path;
+          const fr = byFile.get(fp) || { filePath: fp, reads: 0, resultTokens: 0, attributedCost: 0, sessions: new Set() };
+          fr.reads++; fr.resultTokens += inv.resultTokens; fr.attributedCost += cost; fr.sessions.add(sid2);
+          byFile.set(fp, fr);
+        }
         const dk3 = dayKey(sd.lastTs);
         if (dk3) { const d = byDay.get(dk3); if (d) { d.toolTokens[inv.toolName] = (d.toolTokens[inv.toolName] || 0) + inv.resultTokens; } }
       }
@@ -123,7 +129,7 @@ function load(days) {
     t.avgCostPerCall = t.calls ? t.attributedCost / t.calls : 0;
   }
 
-  return { files: files.length, linesRead, parseErrors, totals, bySession, byProject, byTool: byToolV2, byDay };
+  return { files: files.length, linesRead, parseErrors, totals, bySession, byProject, byTool: byToolV2, byDay, byFile };
 }
 
 module.exports = { load, estimateCost, pickTier, PRICING };

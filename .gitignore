@@ -7,6 +7,9 @@ DESIGN.md
 REDESIGN.md
 TESTING.md
 
+# Auto-generated plan metadata
+plans/
+
 # OS
 .DS_Store
 *.swp

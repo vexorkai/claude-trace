@@ -20,6 +20,7 @@ function parseArgs(argv) {
     help: args.has('--help') || args.has('-h'),
     sessions: args.has('--sessions'),
     tools: args.has('--tools'),
+    reads: args.has('--reads'),
     projects: args.has('--projects'),
     timeline: args.has('--timeline'),
     reflect: args.has('--reflect'),
@@ -41,6 +42,7 @@ ${bold('Usage:')}
   claude-trace                   Summary view
   claude-trace --sessions        Sessions breakdown
   claude-trace --tools           Tool cost attribution
+  claude-trace --reads           File-level read cost breakdown
   claude-trace --projects        Project breakdown
   claude-trace --timeline        14-day timeline with tool breakdown
   claude-trace --session <id>    Drill into a specific session turn-by-turn
@@ -128,6 +130,40 @@ function printTools(d, topN) {
   console.log(color('dim','\n* Attribution: tool_result content size → tokens injected → proportional cost'));
 }
 
+function commonPrefix(paths) {
+  if (paths.length === 0) return '';
+  const parts = paths[0].split('/');
+  let prefix = '';
+  for (let i = 0; i < parts.length - 1; i++) {
+    const candidate = parts.slice(0, i + 1).join('/') + '/';
+    if (paths.every(p => p.startsWith(candidate))) prefix = candidate;
+    else break;
+  }
+  return prefix;
+}
+
+function printReads(d, topN) {
+  const rows = Array.from(d.byFile.values()).sort((a, b) => b.attributedCost - a.attributedCost).slice(0, topN);
+  if (rows.length === 0) { console.log(color('yellow', '\nNo Read invocations with file paths found.')); return; }
+  const prefix = commonPrefix(rows.map(r => r.filePath));
+  const strip = fp => prefix ? fp.slice(prefix.length) : fp;
+  console.log(`\n${bold('Files by read cost')}`);
+  console.log(color('dim', 'file                                       reads     cost       sessions'));
+  for (const r of rows) {
+    const name = strip(r.filePath);
+    const display = name.length > 40 ? '...' + name.slice(name.length - 37) : name;
+    console.log(`${display.padEnd(42)} ${String(r.reads).padStart(5)}  ${fmtUsd(r.attributedCost).padEnd(10)} ${String(r.sessions.size).padStart(4)}`);
+  }
+  const totalReadCost = Array.from(d.byFile.values()).reduce((s, r) => s + r.attributedCost, 0);
+  const totalCost = d.totals.totalCost || 1;
+  console.log(`\n${color('dim', `Total read cost: ${fmtUsd(totalReadCost)} (${Math.round(totalReadCost / totalCost * 100)}% of all spend)`)}`);
+  const topFile = rows[0];
+  if (topFile && topFile.reads >= 3) {
+    console.log(color('yellow', `\n  → Consider adding frequently-read files to CLAUDE.md context`));
+    console.log(color('yellow', `  → Large files read often suggest splitting or using Grep instead`));
+  }
+}
+
 function printProjects(d, topN) {
   const rows = Array.from(d.byProject.values()).sort((a,b)=>b.totalCost-a.totalCost).slice(0, topN);
   console.log(`\n${bold(`Projects (top ${topN} by cost)`)}`);
@@ -181,7 +217,7 @@ function printSession(d, partialId) {
     let r; try { r = JSON.parse(line); } catch { continue; }
     if (r && r.type === 'assistant' && r.message && r.message.content) {
       for (const block of r.message.content) {
-        if (block && block.type === 'tool_use' && block.id && block.name) pendingTools.set(block.id, { name: block.name, turnIdx });
+        if (block && block.type === 'tool_use' && block.id && block.name) pendingTools.set(block.id, { name: block.name, turnIdx, input: block.input || {} });
       }
       turnIdx++;
     }
@@ -190,7 +226,7 @@ function printSession(d, partialId) {
         if (block && block.type === 'tool_result' && block.tool_use_id) {
           const tool = pendingTools.get(block.tool_use_id);
           if (tool) {
-            invocations.push({ turnIndex: tool.turnIdx, toolName: tool.name, resultTokens: estimateTokens(block.content), isError: block.is_error || false });
+            invocations.push({ turnIndex: tool.turnIdx, toolName: tool.name, resultTokens: estimateTokens(block.content), isError: block.is_error || false, input: tool.input });
             pendingTools.delete(block.tool_use_id);
           }
         }
@@ -245,6 +281,7 @@ function main() {
   if (a.session) printSession(d, a.session);
   else if (a.sessions) printSessions(d, a.top);
   else if (a.tools) printTools(d, a.top);
+  else if (a.reads) printReads(d, a.top);
   else if (a.projects) printProjects(d, a.top);
   else if (a.timeline) printTimeline(d);
   else printSummary(d, a.top);

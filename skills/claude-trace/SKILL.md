@@ -10,7 +10,7 @@ Run when the user types `/reflect` or asks to review session efficiency, analyze
 
 1. **Run the reflect analyzer:**
    ```bash
-   claude-trace --reflect --project "$PWD"
+   node "${CLAUDE_PLUGIN_ROOT}/index.js" --reflect --project "$PWD" 2>/dev/null || claude-trace --reflect --project "$PWD"
    ```
    Use the Bash tool. It finds the most recent session automatically.
 
@@ -35,7 +35,7 @@ Run when the user types `/reflect` or asks to review session efficiency, analyze
 
 For patterns across recent sessions:
 ```bash
-claude-trace --reflect --project "$PWD" --recent 5
+node "${CLAUDE_PLUGIN_ROOT}/index.js" --reflect --project "$PWD" --recent 5 2>/dev/null || claude-trace --reflect --project "$PWD" --recent 5
 ```
 Look for: recurring retry loops, growing costs over time, consistent error patterns.
 

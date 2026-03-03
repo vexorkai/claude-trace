@@ -16,15 +16,23 @@ Or run without installing:
 npx @vexor/claude-trace --tools
 ```
 
-## Claude Code Skill
+## Claude Code Plugin
 
-The `/reflect` command runs inside Claude Code and requires the CLI to be installed first.
+Install as a Claude Code plugin for the `/reflect` skill:
 
 ```bash
 # 1. Install the CLI
 npm install -g @vexor/claude-trace
 
-# 2. Install the skill
+# 2. Install the plugin (copies skills automatically)
+claude plugin add github:vexorkai/claude-trace
+```
+
+### Manual Skill Install
+
+If you prefer not to use the plugin system:
+
+```bash
 mkdir -p ~/.claude/skills/claude-trace
 curl -o ~/.claude/skills/claude-trace/SKILL.md \
   https://raw.githubusercontent.com/vexorkai/claude-trace/main/skills/claude-trace/SKILL.md
@@ -43,6 +51,7 @@ Claude runs `claude-trace --reflect` on the current project and reasons about th
 ```
 claude-trace                   # overall summary
 claude-trace --tools           # cost by tool (the useful one)
+claude-trace --reads           # file-level read cost breakdown
 claude-trace --sessions        # cost by session
 claude-trace --projects        # cost by project
 claude-trace --timeline        # daily spend chart
@@ -110,8 +119,8 @@ Timeline (last 14 days)
 ```
 Sessions (top 5 by cost)
 session    date        cost      tokens       cost driver        project
-1fa7c9d7   2026-02-16 $92.603   40,773,397   Read               Github/amazon-cli
-77026d0b   2026-02-17 $48.618   27,103,965   Read               Github/amazon-cli
+1fa7c9d7   2026-02-16 $92.603   40,773,397   Read               Github/my-project
+77026d0b   2026-02-17 $48.618   27,103,965   Read               Github/my-project
 ```
 
 ## How attribution works
