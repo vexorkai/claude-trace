@@ -13,3 +13,6 @@ TESTING.md
 
 # Logs
 *.log
+
+# npm credentials
+.npmrc

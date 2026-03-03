@@ -1,5 +1,5 @@
 {
-  "name": "claude-trace",
+  "name": "@vexor/claude-trace",
   "version": "0.1.0",
   "description": "Zero-dependency CLI for Claude Code token usage analytics",
   "bin": {
@@ -9,5 +9,29 @@
   "type": "commonjs",
   "scripts": {
     "start": "node index.js"
+  },
+  "files": [
+    "index.js",
+    "src/",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "token-usage",
+    "cost-analytics",
+    "cli"
+  ],
+  "author": "Vexor",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vexorkai/claude-trace.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
