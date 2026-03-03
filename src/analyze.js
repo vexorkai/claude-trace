@@ -152,8 +152,12 @@ function printReflect(session, sessionCost) {
   const toolRows = Object.entries(toolCounts).sort((a, b) => (toolTokens[b[0]] || 0) - (toolTokens[a[0]] || 0));
 
   const sid = session.sessionId ? session.sessionId.slice(0, 8) : path.basename(session.filePath);
+  const sessionDate = session.startTime
+    ? new Date(session.startTime).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+    : null;
   console.log(`\n${bold('── reflect: session ' + sid + ' ──')}`);
   console.log(`  Project: ${color('dim', session.cwd || '(unknown)')}`);
+  if (sessionDate) console.log(`  Session: ${color('dim', sessionDate)}`);
   console.log(`  Duration: ${dur}  |  Cost: ${color('green', bold(fmtUsd(cost)))}`);
   console.log(`  Turns: ${session.turns.filter(t => t.role === 'user').length} human prompts, ${session.turns.filter(t => t.role === 'assistant').length} assistant responses`);
 
@@ -179,7 +183,7 @@ function printReflect(session, sessionCost) {
     console.log(`\n${bold('Retry loops detected:')}`);
     for (const loop of retryLoops) {
       const loopCost = estimateLoopCost(session, [loop], cost);
-      console.log(`  ${color('red', '→')} ${loop.tool} called ${loop.count}x in a row — estimated wasted ${color('red', fmtUsd(loopCost))}`);
+      console.log(`  ${color('red', '→')} ${loop.tool} called ${loop.count}x in a row — estimated wasted ${color('red', fmtUsd(loopCost))} ${color('dim', '(proportional to invocation share × session cost)')}`);
     }
   } else {
     console.log(`\n  ${color('green', '✓')} No retry loops detected.`);
@@ -202,7 +206,8 @@ function printReflect(session, sessionCost) {
     if (errors > 0) {
       const errSamples = allResults.filter(r => !r.success).slice(0, 2);
       for (const e of errSamples) {
-        console.log(`    ${color('dim', (e.outputSummary || '(no output)').slice(0, 150))}`);
+        const errText = (e.outputSummary || '(no output)').replace(/\n/g, ' ').slice(0, 400);
+        console.log(`    ${color('dim', errText)}`);
       }
     }
   }
@@ -274,8 +279,16 @@ function runReflect(opts) {
   }
 
   const sessions = parseSessions(filePaths);
+  if (!sessions || sessions.length === 0) {
+    console.log(color('yellow', 'No session data could be parsed from the matched files.'));
+    process.exit(1);
+  }
   for (const s of sessions) {
     if (s.error) { console.log(color('red', `Error parsing ${s.filePath}: ${s.error}`)); continue; }
+    if (!s.turns || s.turns.length === 0) {
+      console.log(color('yellow', `Session ${s.sessionId || s.filePath}: no turns found (empty session?)`));
+      continue;
+    }
     printReflect(s, null);
   }
 }
