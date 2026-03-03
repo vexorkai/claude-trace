@@ -7,13 +7,13 @@ Most people using Claude Code have no idea where their context budget is going. 
 ## Install
 
 ```bash
-npm install -g github:vexorkai/claude-trace
+npm install -g @vexor/claude-trace
 ```
 
 Or run without installing:
 
 ```bash
-npx github:vexorkai/claude-trace --tools
+npx @vexor/claude-trace --tools
 ```
 
 ## Claude Code Skill
@@ -22,7 +22,7 @@ The `/reflect` command runs inside Claude Code and requires the CLI to be instal
 
 ```bash
 # 1. Install the CLI
-npm install -g github:vexorkai/claude-trace
+npm install -g @vexor/claude-trace
 
 # 2. Install the skill
 mkdir -p ~/.claude/skills/claude-trace
