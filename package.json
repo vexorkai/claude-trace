@@ -1,6 +1,6 @@
 {
   "name": "@vexor/claude-trace",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "description": "Zero-dependency CLI for Claude Code token usage analytics",
   "bin": {
     "claude-trace": "./index.js"
